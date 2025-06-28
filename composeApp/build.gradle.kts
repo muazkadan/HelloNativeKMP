@@ -59,6 +59,8 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+
+            implementation("net.java.dev.jna:jna:5.17.0@aar")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -104,6 +106,11 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    externalNativeBuild {
+        cmake {
+            path = file("native/src/CMakeLists.txt")
+        }
     }
 }
 

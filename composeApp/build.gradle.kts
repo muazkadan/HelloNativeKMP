@@ -27,7 +27,12 @@ kotlin {
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
-            isStatic = true
+            isStatic = false
+        }
+
+        iosTarget.compilations["main"].cinterops.create("native_greeting") {
+            definitionFile.set(project.file("src/nativeInterop/cinterop/native_greeting.def"))
+            includeDirs.headerFilterOnly(project.file("native/src/"))
         }
     }
     

@@ -3,7 +3,15 @@ project(NativeGreeting)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_library(native_greeting SHARED 
-    native_greeting.cpp 
-    native_greeting.h
-)
+# Build static library for iOS, shared for other platforms
+if(IOS)
+    add_library(native_greeting STATIC 
+        native_greeting.cpp 
+        native_greeting.h
+    )
+else()
+    add_library(native_greeting SHARED 
+        native_greeting.cpp 
+        native_greeting.h
+    )
+endif()

@@ -1,4 +1,5 @@
 #include <cstring>
+#include "native_greeting.h"
 
 extern "C" {
     const char* getNativeGreeting() {

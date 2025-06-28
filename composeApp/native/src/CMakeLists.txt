@@ -3,4 +3,7 @@ project(NativeGreeting)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_library(native_greeting SHARED native_greeting.cpp)
+add_library(native_greeting SHARED 
+    native_greeting.cpp 
+    native_greeting.h
+)

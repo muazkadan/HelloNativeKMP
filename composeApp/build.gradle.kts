@@ -83,6 +83,8 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation("net.java.dev.jna:jna:5.17.0")
+            implementation("org.scijava:native-lib-loader:2.5.0")
         }
     }
 }
@@ -121,6 +123,11 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+}
+
+tasks.withType<JavaExec> {
+    val libPath = projectDir.absolutePath + "/native/build/desktop"
+    systemProperty("java.library.path", libPath)
 }
 
 compose.desktop {

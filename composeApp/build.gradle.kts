@@ -83,6 +83,7 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation("net.java.dev.jna:jna:5.17.0")
         }
     }
 }

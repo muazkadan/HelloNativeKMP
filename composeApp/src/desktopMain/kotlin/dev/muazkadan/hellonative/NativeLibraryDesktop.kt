@@ -2,7 +2,7 @@ package dev.muazkadan.hellonative
 
 import com.sun.jna.Library
 import com.sun.jna.Native
-import java.io.File
+import org.scijava.nativelib.NativeLoader
 import kotlin.getValue
 
 interface NativeLibraryDesktop: Library {
@@ -10,24 +10,15 @@ interface NativeLibraryDesktop: Library {
 
     companion object {
         val INSTANCE by lazy { 
-            // Get the path to the native library
-            val projectDir = System.getProperty("user.dir")
-            val osName = System.getProperty("os.name").lowercase()
-            val libraryName = when {
-                osName.contains("mac") -> "libnative_greeting.dylib"
-                osName.contains("win") -> "native_greeting.dll"
-                else -> "libnative_greeting.so"
+            try {
+                // Try to load from system library path first
+                NativeLoader.loadLibrary("native_greeting")
+                Native.load("native_greeting", NativeLibraryDesktop::class.java)
+            } catch (e: Exception) {
+                println("Failed to load library via NativeLoader: ${e.message}")
+                // Fallback to JNA's default loading mechanism
+                Native.load("native_greeting", NativeLibraryDesktop::class.java)
             }
-            
-            // Check if we're already in composeApp directory or need to go up
-            val libraryPath = if (projectDir.endsWith("composeApp")) {
-                File(projectDir, "native/build/desktop/$libraryName").absolutePath
-            } else {
-                File(projectDir, "composeApp/native/build/desktop/$libraryName").absolutePath
-            }
-            
-            println("Loading native library from: $libraryPath")
-            Native.load(libraryPath, NativeLibraryDesktop::class.java) 
         }
     }
 }

@@ -62,6 +62,40 @@ The built libraries will be placed at:
 - `build/ios_combined/Release-iphoneos/libnative_greeting.a` - Fat library for device and x86_64 simulator
 - `build/ios_simulator_arm64/Release-iphonesimulator/libnative_greeting.a` - ARM64 simulator library
 
+### Desktop Build - Manual Native Library Build
+
+Similar to iOS, desktop targets require manual building of the native C++ libraries:
+
+```bash
+cd composeApp/native
+chmod +x build_desktop.sh
+./build_desktop.sh
+```
+
+This script will:
+- Build a shared library for the desktop platform (.dylib on macOS, .so on Linux, .dll on Windows)
+- Use standard CMake build process without custom toolchains
+- Create the library file that JNA requires for runtime loading
+
+The built library will be placed at:
+- `build/desktop/libnative_greeting.dylib` (macOS)
+- `build/desktop/libnative_greeting.so` (Linux) 
+- `build/desktop/native_greeting.dll` (Windows)
+
+### Running Desktop Target
+
+After building the native library, you can run the desktop target:
+
+```bash
+# Run desktop application
+./gradlew :composeApp:run
+
+# Or build desktop distribution
+./gradlew :composeApp:createDistributable
+```
+
+**Note**: The desktop implementation uses JNA (Java Native Access) with `native-lib-loader` for simplified cross-platform library loading. The library is automatically detected from the system library path without manual path construction.
+
 ### Running iOS Targets
 
 After building the native libraries, you can run the iOS targets:

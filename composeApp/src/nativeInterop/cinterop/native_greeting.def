@@ -5,6 +5,6 @@ headerFilter = native_greeting.h
 
 staticLibraries = libnative_greeting.a
 
-libraryPaths.ios_x64 = native/build/ios_combined/Release-iphoneos/
-libraryPaths.ios_arm64 = native/build/ios_combined/Release-iphoneos/
+libraryPaths.ios_x64 = native/build/ios_simulator_x64/Release-iphonesimulator/
+libraryPaths.ios_arm64 = native/build/ios_device/Release-iphoneos/
 libraryPaths.ios_simulator_arm64 = native/build/ios_simulator_arm64/Release-iphonesimulator/

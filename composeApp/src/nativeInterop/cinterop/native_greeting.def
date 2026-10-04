@@ -1,7 +1,6 @@
-package = native_greeting
+package = dev.muazkadan.hellonative.cinterop
 headers = native_greeting.h
 headerFilter = native_greeting.h
-
 
 staticLibraries = libnative_greeting.a
 

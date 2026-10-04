@@ -2,7 +2,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC_DIR="$SCRIPT_DIR/src"
+SRC_DIR="$SCRIPT_DIR"
 
 rm -rf "$SCRIPT_DIR/build"
 
@@ -23,7 +23,6 @@ build_ios() {
 
 # Build all targets
 build_ios ios_device arm64
-build_ios ios_simulator_x64 x86_64 iphonesimulator
 build_ios ios_simulator_arm64 arm64 iphonesimulator
 
 echo "Build completed successfully!"

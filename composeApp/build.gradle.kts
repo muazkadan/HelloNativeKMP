@@ -1,4 +1,6 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -9,6 +11,18 @@ plugins {
 
 kotlin {
     jvmToolchain(21)
+
+    // Android and desktop share one JNI binding in jvmCommonMain.
+    // withAndroidTarget() doesn't match the Android-KMP library target, so select it by platform type.
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("jvmCommon") {
+                withCompilations { it.platformType == KotlinPlatformType.androidJvm }
+                withJvm()
+            }
+        }
+    }
 
     android {
         namespace = "dev.muazkadan.hellonative.shared"
@@ -31,7 +45,7 @@ kotlin {
 
         iosTarget.compilations["main"].cinterops.create("native_greeting") {
             definitionFile.set(project.file("src/nativeInterop/cinterop/native_greeting.def"))
-            includeDirs.headerFilterOnly(rootProject.file("native/src/"))
+            includeDirs.headerFilterOnly(rootProject.file("native/include/"))
         }
     }
 
@@ -58,15 +72,14 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(projects.native)
-            implementation("net.java.dev.jna:jna:5.17.0@aar")
-        }
-        jvmMain.dependencies {
-            implementation("net.java.dev.jna:jna:5.17.0")
-            implementation("org.scijava:native-lib-loader:2.5.0")
         }
     }
 }
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+}
+
+tasks.named<Test>("jvmTest") {
+    systemProperty("java.library.path", rootProject.file("native/build/desktop").absolutePath)
 }

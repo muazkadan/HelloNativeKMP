@@ -25,3 +25,13 @@ if(NATIVE_GREETING_JNI)
         target_include_directories(native_greeting_jni PRIVATE ${JNI_INCLUDE_DIRS})
     endif()
 endif()
+
+# Used by the Gradle CMakeBuild tasks for iOS and desktop (Android packages via AGP).
+include(GNUInstallDirs)
+if(NATIVE_GREETING_JNI)
+    install(TARGETS native_greeting_jni
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR})
+else()
+    install(TARGETS native_greeting ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

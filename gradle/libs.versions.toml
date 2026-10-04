@@ -9,6 +9,7 @@ composeHotReload = "1.2.0"
 composeMultiplatform = "1.12.1"
 compose-material3 = "1.9.0"
 androidx-lifecycle = "2.11.0"
+jvmToolchain = "21"
 kotlin = "2.4.20"
 kotlinx-coroutines = "1.11.0"
 

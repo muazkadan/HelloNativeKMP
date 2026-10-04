@@ -1,124 +1,111 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop.
+# HelloNativeKMP
 
-* `/composeApp` is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - `commonMain` is for code that's common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple's CoreCrypto for the iOS part of your Kotlin app,
-    `iosMain` would be the right folder for such calls.
+A Compose Multiplatform app (Android, iOS, Desktop, Web) that calls one shared C++ library from
+Kotlin. Each platform uses its officially recommended interop mechanism, and Gradle builds the
+native code, so a plain `./gradlew` build or an Xcode build is all you need.
 
-* `/iosApp` contains iOS applications. Even if you're sharing your UI with Compose Multiplatform, 
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+| Platform | Interop | How the C++ is built and shipped |
+|---|---|---|
+| iOS | Kotlin/Native **cinterop** against a static library | `composeApp:buildNativeIos*` runs CMake before cinterop; the `.a` is embedded in the klib |
+| Android | **JNI** | `:native` builds `libnative_greeting_jni.so` for every ABI with AGP's `externalNativeBuild` |
+| Desktop (JVM) | **JNI** (same binding as Android) | `composeApp:buildNativeDesktop` runs CMake; `desktopApp` ships the library as Compose app resources |
+| Web (Wasm) | — | No native code; see [Web](#web) |
 
-## Building Targets with Native Components
+## Project layout
 
-This project includes native C++ libraries that are integrated differently for each platform.
-
-### Android Build
-
-Android targets build the native C++ library automatically using CMake integration:
-
-- **Automatic Build**: The native library is built automatically when you build the Android target
-- **CMake Integration**: Uses `externalNativeBuild` in `build.gradle.kts` pointing to `native/src/CMakeLists.txt`
-- **JNA Interface**: Uses Java Native Access (JNA) to interface with the native library instead of cinterop
-- **No Manual Steps**: Simply run `./gradlew assembleDebug` or build through Android Studio
-
-The Android implementation loads the native library at runtime using:
-```kotlin
-Native.load("native_greeting", NativeLibraryAndroid::class.java)
+```
+native/        C++ sources + CMake, and the Android library module that packages the JNI .so
+  include/       Public C API (native_greeting.h), used by cinterop and the JNI bridge
+  src/           Platform-independent core
+  jni/           JNI bridge, registers methods with RegisterNatives in JNI_OnLoad
+composeApp/    Shared KMP library (UI + interop), uses com.android.kotlin.multiplatform.library
+  commonMain/      expect fun nativeGreeting(): String
+  jvmCommonMain/   Single JNI binding shared by androidMain and jvmMain
+  androidMain/     System.loadLibrary
+  jvmMain/         Loads the library from Compose Desktop app resources
+  iosMain/         Calls the cinterop bindings
+androidApp/    Android application entry point
+desktopApp/    Desktop entry point and packaging (DMG/MSI/DEB)
+webApp/        Kotlin/Wasm entry point
+iosApp/        Xcode project
+build-logic/   CMakeBuild Gradle task used for the iOS and desktop native builds
 ```
 
-To build the Android target:
-```bash
-# Debug build
-./gradlew :composeApp:assembleDebug
+### Why this setup
 
-# Or open in Android Studio
-open -a "Android Studio" .
-```
+- **cinterop on iOS** is the only first-class way to call C from Kotlin/Native.
+- **JNI on Android and desktop** is the official NDK path. It needs no runtime dependency (JNA
+  ships its own `libjnidispatch.so` for each ABI and adds marshalling overhead to every call), and
+  one binding in `jvmCommonMain` serves both targets. The Java FFM API (JDK 22+) would also work on
+  desktop, but Android doesn't support it, so you'd need a second binding.
+- **`RegisterNatives` in `JNI_OnLoad`**, with hidden symbol visibility, means `JNI_OnLoad` is the
+  only exported symbol and Kotlin names never leak into C++ symbol names. AGP's default R8 rules
+  keep classes that declare `native` methods, so release builds are minified safely.
+- **The `:native` module is separate** because the Android-KMP library plugin doesn't support
+  `externalNativeBuild`.
 
-### Prerequisites for iOS Build
+## Prerequisites
 
-- Xcode (with command line tools)
-- CMake 3.14+ 
-- iOS Toolchain for CMake
+- JDK 21. Gradle resolves it automatically through `gradle/gradle-daemon-jvm.properties` and toolchains.
+- Android SDK with NDK `29.0.14206865` (see `android-ndk` in `gradle/libs.versions.toml`).
+  NDK r28+ produces 16 KB-aligned libraries, which Google Play requires.
+- CMake 3.22.1+. Gradle uses, in order: the `cmake.executable` Gradle property, `cmake` on `PATH`,
+  or the newest CMake installed in the Android SDK.
+- Xcode, for iOS (Apple Silicon simulators only; `iosX64` isn't supported by Compose Multiplatform anymore).
 
-### iOS Build - Manual Native Library Build
+## Build and run
 
-Unlike Android, iOS targets require manual building of the native C++ libraries before building the iOS app:
-
-```bash
-cd composeApp/native
-chmod +x build_ios.sh
-./build_ios.sh
-```
-
-This script will:
-- Build a fat library for iOS device (arm64) and iOS simulator (x86_64) using `OS64COMBINED`
-- Build a separate library for iOS simulator arm64 using `SIMULATORARM64`
-- Create the necessary library files that Kotlin/Native cinterop requires
-
-The built libraries will be placed at:
-- `build/ios_combined/Release-iphoneos/libnative_greeting.a` - Fat library for device and x86_64 simulator
-- `build/ios_simulator_arm64/Release-iphonesimulator/libnative_greeting.a` - ARM64 simulator library
-
-### Desktop Build - Manual Native Library Build
-
-Similar to iOS, desktop targets require manual building of the native C++ libraries:
+### Android
 
 ```bash
-cd composeApp/native
-chmod +x build_desktop.sh
-./build_desktop.sh
+./gradlew :androidApp:assembleDebug
 ```
 
-This script will:
-- Build a shared library for the desktop platform (.dylib on macOS, .so on Linux, .dll on Windows)
-- Use standard CMake build process without custom toolchains
-- Create the library file that JNA requires for runtime loading
+Or run the `androidApp` configuration from Android Studio.
 
-The built library will be placed at:
-- `build/desktop/libnative_greeting.dylib` (macOS)
-- `build/desktop/libnative_greeting.so` (Linux) 
-- `build/desktop/native_greeting.dll` (Windows)
+### iOS
 
-### Running Desktop Target
+Open `iosApp/iosApp.xcodeproj` in Xcode and run. The Xcode build phase calls
+`:composeApp:embedAndSignAppleFrameworkForXcode`, which builds the C++ library first.
 
-After building the native library, you can run the desktop target:
+### Desktop
 
 ```bash
-# Run desktop application
-./gradlew :composeApp:run
-
-# Or build desktop distribution
-./gradlew :composeApp:createDistributable
+./gradlew :desktopApp:run
 ```
 
-**Note**: The desktop implementation uses JNA (Java Native Access) with `native-lib-loader` for simplified cross-platform library loading. The library is automatically detected from the system library path without manual path construction.
-
-### Running iOS Targets
-
-After building the native libraries, you can run the iOS targets:
+To build a distributable for the current OS (the native library is bundled automatically):
 
 ```bash
-# For iOS device/simulator
-./gradlew :composeApp:iosSimulatorArm64Test
-./gradlew :composeApp:iosX64Test 
-./gradlew :composeApp:iosArm64Test
-
-# Or open the iOS project in Xcode
-open iosApp/iosApp.xcodeproj
+./gradlew :desktopApp:packageDistributionForCurrentOS
 ```
 
-**Note**: Always build the native libraries first before running any iOS-related Gradle tasks, as the Kotlin/Native cinterop depends on these compiled libraries.
+The native library is built for the host OS and architecture only, so build each installer on its
+target platform (for example, with a CI matrix).
 
-## Additional Resources
+### Web
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),
-[Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/#compose-multiplatform),
-[Kotlin/Wasm](https://kotl.in/wasm/)…
+```bash
+./gradlew :webApp:wasmJsBrowserDevelopmentRun
+```
 
-We would appreciate your feedback on Compose/Web and Kotlin/Wasm in the public Slack channel [#compose-web](https://slack-chats.kotlinlang.org/c/compose-web).
-If you face any issues, please report them on [YouTrack](https://youtrack.jetbrains.com/newIssue?project=CMP).
+The C++ library isn't compiled for the browser, so `nativeGreeting()` returns a placeholder on Web.
+To share the C++ code there too, compile it to WebAssembly with Emscripten and call it from
+`wasmJsMain` through JS interop.
 
-You can open the web application by running the `:composeApp:wasmJsBrowserDevelopmentRun` Gradle task.
+## Tests
+
+```bash
+./gradlew :composeApp:allTests
+```
+
+`NativeGreetingTest` calls into the real C++ library on the JVM (through JNI, loading the library the
+same way the packaged desktop app does) and on the iOS simulator (through cinterop).
+
+## Adding native functions
+
+1. Declare the function in `native/include/native_greeting.h` and implement it in `native/src/`.
+2. **iOS:** it's available right away through `dev.muazkadan.hellonative.cinterop`.
+3. **Android/desktop:** add an `external fun` to `NativeGreetingJni` in `jvmCommonMain`, then add
+   the matching wrapper and `JNINativeMethod` entry to `native/jni/native_greeting_jni.cpp`.
+4. Expose it to shared code with an `expect`/`actual` declaration.

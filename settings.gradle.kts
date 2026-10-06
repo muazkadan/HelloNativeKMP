@@ -2,6 +2,7 @@ rootProject.name = "HelloNativeKMP"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             mavenContent {
@@ -32,4 +33,8 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
+include(":androidApp")
 include(":composeApp")
+include(":desktopApp")
+include(":native")
+include(":webApp")

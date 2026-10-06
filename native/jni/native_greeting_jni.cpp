@@ -4,7 +4,7 @@
 
 #include "native_greeting.h"
 
-// JNI bridge shared by Android and desktop JVM. Methods are bound with
+// JNI bridge for Android (desktop uses the Java FFM API instead). Methods are bound with
 // RegisterNatives in JNI_OnLoad instead of relying on mangled symbol names,
 // so only JNI_OnLoad is exported from the shared library.
 

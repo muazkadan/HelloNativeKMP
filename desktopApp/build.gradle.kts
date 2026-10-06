@@ -8,10 +8,10 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(libs.versions.jvmToolchain.get().toInt())
+    jvmToolchain(libs.versions.jvmToolchainDesktop.get().toInt())
 }
 
-// The JNI library built by :composeApp, laid out as <os>-<arch>/libnative_greeting_jni.*
+// The shared library built by :composeApp, laid out as <os>-<arch>/libnative_greeting.*
 val desktopNativeLibs = configurations.dependencyScope("desktopNativeLibs")
 val desktopNativeLibsDir = configurations.resolvable("desktopNativeLibsDir") {
     extendsFrom(desktopNativeLibs.get())
@@ -29,7 +29,11 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "dev.muazkadan.hellonative.MainKt"
-        // JNI library loading is a restricted method since JDK 24 (JEP 472).
+        // Run and package with the JDK the FFM bindings were compiled for (not the Gradle daemon's).
+        javaHome = javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(libs.versions.jvmToolchainDesktop.get().toInt()))
+        }.get().metadata.installationPath.asFile.absolutePath
+        // FFM downcalls and System.load are restricted methods (JEP 454, JEP 472).
         jvmArgs += "--enable-native-access=ALL-UNNAMED"
 
         nativeDistributions {

@@ -10,6 +10,8 @@ composeMultiplatform = "1.12.1"
 compose-material3 = "1.9.0"
 androidx-lifecycle = "2.11.0"
 jvmToolchain = "21"
+# Desktop calls native code through the Java FFM API; the jextract 25 bindings need JDK 25.
+jvmToolchainDesktop = "25"
 kotlin = "2.4.20"
 kotlinx-coroutines = "1.11.0"
 

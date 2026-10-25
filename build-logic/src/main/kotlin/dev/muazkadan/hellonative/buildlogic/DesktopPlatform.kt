@@ -20,3 +20,10 @@ private val currentArch: String = when (System.getProperty("os.arch")) {
 val currentDesktopPlatform: String = "$currentOs-$currentArch"
 
 val isMacOsHost: Boolean get() = currentOs == "macos"
+
+/** The Rust target triple for the host, so desktop builds use the same output layout as cross builds. */
+val currentRustTarget: String = when (currentOs) {
+    "macos" -> "apple-darwin"
+    "windows" -> "pc-windows-msvc"
+    else -> "unknown-linux-gnu"
+}.let { if (currentArch == "arm64") "aarch64-$it" else "x86_64-$it" }

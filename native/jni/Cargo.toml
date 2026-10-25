@@ -1,0 +1,12 @@
+[package]
+name = "native_greeting_jni"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+jni = "0.22.4"
+native_greeting_core = { path = "../core" }

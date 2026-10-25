@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 class NativeGreetingTest {
 
     @Test
-    fun greetingComesFromCppLibrary() {
-        assertEquals("Hello from C++", nativeGreeting())
+    fun greetingComesFromRustLibrary() {
+        assertEquals("Hello from Rust", nativeGreeting())
     }
 }

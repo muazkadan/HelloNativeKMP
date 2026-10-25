@@ -4,7 +4,7 @@ package dev.muazkadan.hellonative.nativeinterop
  * JNI binding to `libnative_greeting_jni`, shared by Android and desktop.
  *
  * The native side binds these methods with `RegisterNatives` in `JNI_OnLoad`,
- * so the class name and method signatures must match `native/jni/native_greeting_jni.cpp`.
+ * so the class name and method signatures must match `native/jni/src/lib.rs`.
  */
 internal object NativeGreetingJni {
     init {

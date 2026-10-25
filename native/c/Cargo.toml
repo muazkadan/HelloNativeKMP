@@ -1,0 +1,12 @@
+[package]
+name = "native_greeting"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+# Linked by Kotlin/Native through cinterop.
+crate-type = ["staticlib"]
+
+[dependencies]
+native_greeting_core = { path = "../core" }

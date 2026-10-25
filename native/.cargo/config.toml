@@ -1,0 +1,4 @@
+# NDK r28+ already links 64-bit Android ABIs with 16 KB page alignment, as Google Play requires.
+# Use it for the 32-bit ABIs too, so every library in the APK is aligned the same way.
+[target.'cfg(target_os = "android")']
+rustflags = ["-C", "link-arg=-Wl,-z,max-page-size=16384"]

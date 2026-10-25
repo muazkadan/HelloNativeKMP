@@ -2,5 +2,5 @@ package = dev.muazkadan.hellonative.cinterop
 headers = native_greeting.h
 headerFilter = native_greeting.h
 
-# Built by the buildNativeIos* Gradle tasks; the library path is passed via extraOpts.
+# Built by the buildNativeIos* Gradle tasks (Cargo); the library path is passed via extraOpts.
 staticLibraries = libnative_greeting.a
